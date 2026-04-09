@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: auraforge-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: REQUIRE_API_KEY
+        value: "false"
+      - key: AURAFORGE_API_KEYS
+        value: "demo-key-123"
+      - key: MODEL_PATH
+        value: "/app/model.pkl"
+    healthCheckPath: /health
+    autoDeploy: true

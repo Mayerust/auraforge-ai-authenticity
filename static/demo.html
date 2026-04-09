@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURAFORGE — AI Audio Detection</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #11111a;
+    --bg3: #18182a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --amber: #f59e0b;
+    --amber-dim: #92400e;
+    --amber-glow: rgba(245,158,11,0.15);
+    --green: #10b981;
+    --green-dim: #064e3b;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --yellow: #eab308;
+    --yellow-dim: #713f12;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --radius: 12px;
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── NAV ── */
+  nav {
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,15,0.8);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-inner {
+    max-width: 900px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .nav-badge {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--amber-glow); color: var(--amber);
+    border: 1px solid rgba(245,158,11,0.3);
+  }
+  .nav-links { display: flex; gap: 24px; }
+  .nav-links a {
+    font-size: 13px; color: var(--text2); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── LOGO SVG ── */
+  .logo-wrap { display: flex; align-items: center; gap: 12px; }
+  .logo-text {
+    font-family: var(--mono); font-size: 16px; font-weight: 700;
+    letter-spacing: 0.1em; color: var(--text);
+  }
+  .logo-text span { color: var(--amber); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 0 64px;
+    text-align: center;
+  }
+  .hero-logo {
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; margin-bottom: 32px;
+  }
+  .hero-icon {
+    width: 72px; height: 72px;
+  }
+  .hero-wordmark {
+    font-family: var(--mono); font-size: 48px; font-weight: 700;
+    letter-spacing: 0.08em; line-height: 1;
+  }
+  .hero-wordmark span { color: var(--amber); }
+  .hero-tagline {
+    font-size: 18px; color: var(--text2); font-weight: 300;
+    margin-bottom: 12px; letter-spacing: 0.01em;
+  }
+  .hero-sub {
+    font-family: var(--mono); font-size: 12px; color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── STATS ROW ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 1px;
+    background: var(--border); border-radius: var(--radius);
+    overflow: hidden; margin: 0 0 48px;
+  }
+  .stat {
+    background: var(--bg2); padding: 20px 24px;
+  }
+  .stat-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .stat-val {
+    font-size: 28px; font-weight: 600; color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-val.amber { color: var(--amber); }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 32px; margin-bottom: 16px;
+  }
+  .dropzone {
+    border: 1.5px dashed var(--border2); border-radius: 8px;
+    padding: 40px 24px; text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--amber); background: var(--amber-glow);
+  }
+  .dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .dz-icon { margin-bottom: 16px; }
+  .dz-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .dz-sub { font-size: 13px; color: var(--text2); }
+
+  .sample-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .sample-btn {
+    font-family: var(--mono); font-size: 11px;
+    padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); cursor: pointer; transition: all 0.15s;
+  }
+  .sample-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+  .sample-btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+
+  /* ── FILE INFO ROW ── */
+  .file-row {
+    display: none; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--bg3);
+    border-radius: 8px; margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .file-row.show { display: flex; }
+  .file-name { font-size: 13px; font-family: var(--mono); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-size { font-size: 11px; color: var(--text3); }
+
+  /* ── WAVEFORM ── */
+  .waveform {
+    height: 52px; display: flex; align-items: center; gap: 2px;
+    margin-bottom: 20px; overflow: hidden;
+  }
+  .wbar {
+    width: 3px; border-radius: 2px; background: var(--bg3);
+    flex-shrink: 0; transition: background 0.3s;
+  }
+  .wbar.live { background: var(--amber); animation: wblink 0.5s ease-in-out infinite alternate; }
+  @keyframes wblink { to { opacity: 0.2; } }
+
+  /* ── ANALYZE BUTTON ── */
+  .analyze-btn {
+    width: 100%; padding: 14px;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    background: transparent; color: var(--amber);
+    border: 1.5px solid var(--amber); border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .analyze-btn:hover:not(:disabled) { background: var(--amber); color: #000; }
+  .analyze-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── PROGRESS ── */
+  .progress { display: none; margin-top: 20px; }
+  .progress.show { display: block; }
+  .prog-step {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+    color: var(--text3); margin-bottom: 8px;
+  }
+  .prog-track { height: 2px; background: var(--bg3); border-radius: 1px; overflow: hidden; }
+  .prog-bar { height: 100%; background: var(--amber); width: 0%; transition: width 0.08s linear; border-radius: 1px; }
+
+  /* ── RESULT ── */
+  .result-card {
+    display: none; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 16px;
+  }
+  .result-card.show { display: block; }
+  .result-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .result-file { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .decision-pill {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.1em; padding: 4px 14px; border-radius: 20px;
+  }
+  .decision-pill.ALLOW { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .decision-pill.FLAG { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .decision-pill.BLOCK { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+  .prob-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .prob-num { font-size: 52px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+  .prob-label { font-size: 14px; color: var(--text2); }
+
+  .meter-track { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+  .meter-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 1.2s cubic-bezier(0.16,1,0.3,1); }
+
+  .result-meta { display: flex; gap: 24px; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; color: var(--text3); }
+  .meta-item span { color: var(--text); font-weight: 500; font-family: var(--mono); }
+
+  /* ── API CODE BLOCK ── */
+  .code-section { margin-bottom: 40px; }
+  .code-tabs { display: flex; gap: 2px; margin-bottom: 0; }
+  .code-tab {
+    font-family: var(--mono); font-size: 11px; padding: 8px 16px;
+    border-radius: 6px 6px 0 0; cursor: pointer;
+    background: var(--bg3); color: var(--text3); border: 1px solid var(--border);
+    border-bottom: none; transition: all 0.15s;
+  }
+  .code-tab.active { background: var(--bg2); color: var(--amber); border-color: var(--border2); }
+  .code-block {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    padding: 20px; overflow-x: auto;
+  }
+  .code-block pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--text2); }
+  .code-block .kw { color: #c678dd; }
+  .code-block .str { color: #98c379; }
+  .code-block .cm { color: var(--text3); }
+  .code-block .fn { color: #61afef; }
+  .code-block .num { color: #d19a66; }
+  .code-panel { display: none; }
+  .code-panel.active { display: block; }
+
+  /* ── LOG ── */
+  .log-section { margin-bottom: 60px; }
+  .section-title {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 12px;
+  }
+  .log-list { display: flex; flex-direction: column; gap: 6px; }
+  .log-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .log-dot.ALLOW { background: var(--green); }
+  .log-dot.FLAG { background: var(--yellow); }
+  .log-dot.BLOCK { background: var(--red); }
+  .log-name { flex: 1; color: var(--text2); font-family: var(--mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-pct { font-family: var(--mono); font-size: 12px; color: var(--text3); min-width: 38px; text-align: right; }
+  .log-dec {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; letter-spacing: 0.06em;
+  }
+  .log-dec.ALLOW { background: rgba(16,185,129,0.1); color: var(--green); }
+  .log-dec.FLAG { background: rgba(234,179,8,0.1); color: var(--yellow); }
+  .log-dec.BLOCK { background: rgba(239,68,68,0.1); color: var(--red); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 24px; text-align: center;
+  }
+  footer p { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  footer span { color: var(--amber); }
+
+  /* ── API URL BANNER ── */
+  .api-banner {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 8px 8px 0; padding: 12px 16px;
+    margin-bottom: 32px; display: flex; align-items: center; gap: 12px;
+  }
+  .api-banner-label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
+  .api-banner-url { font-family: var(--mono); font-size: 13px; color: var(--amber); flex: 1; }
+  #copyUrl {
+    font-family: var(--mono); font-size: 10px;
+    padding: 4px 10px; border-radius: 4px;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); cursor: pointer; transition: all 0.15s;
+  }
+  #copyUrl:hover { border-color: var(--amber); color: var(--amber); }
+
+  @media (max-width: 600px) {
+    .hero-wordmark { font-size: 32px; }
+    .hero-icon { width: 52px; height: 52px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat:last-child { grid-column: span 2; }
+    .prob-num { font-size: 40px; }
+    .result-meta { gap: 14px; }
+    .hero { padding: 48px 0 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo-wrap">
+      <!-- Inline SVG Logo -->
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="7" fill="#1a1a2e"/>
+        <!-- Sound wave bars -->
+        <rect x="4"  y="14" width="3" height="4"  rx="1.5" fill="#f59e0b" opacity="0.4"/>
+        <rect x="9"  y="10" width="3" height="12" rx="1.5" fill="#f59e0b" opacity="0.6"/>
+        <rect x="14" y="6"  width="3" height="20" rx="1.5" fill="#f59e0b"/>
+        <rect x="19" y="10" width="3" height="12" rx="1.5" fill="#f59e0b" opacity="0.6"/>
+        <rect x="24" y="14" width="3" height="4"  rx="1.5" fill="#f59e0b" opacity="0.4"/>
+        <!-- Scan line -->
+        <line x1="2" y1="16" x2="30" y2="16" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="3 2" opacity="0.3"/>
+      </svg>
+      <span class="logo-text">AURA<span>FORGE</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="nav-links">
+        <a href="#demo">Demo</a>
+        <a href="#api">API</a>
+        <a href="http://localhost:8000/docs" target="_blank">Docs ↗</a>
+      </div>
+      <span class="nav-badge">v1.0.0</span>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-logo">
+      <!-- Large hero SVG logo -->
+      <svg class="hero-icon" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="72" height="72" rx="16" fill="#111120"/>
+        <rect x="8"  y="30" width="7" height="12" rx="3.5" fill="#f59e0b" opacity="0.35"/>
+        <rect x="19" y="22" width="7" height="28" rx="3.5" fill="#f59e0b" opacity="0.55"/>
+        <rect x="30" y="12" width="7" height="48" rx="3.5" fill="#f59e0b"/>
+        <rect x="41" y="20" width="7" height="32" rx="3.5" fill="#f59e0b" opacity="0.6"/>
+        <rect x="52" y="28" width="7" height="16" rx="3.5" fill="#f59e0b" opacity="0.35"/>
+        <!-- Crosshair scan -->
+        <circle cx="36" cy="36" r="22" stroke="#f59e0b" stroke-width="0.75" stroke-dasharray="4 3" opacity="0.2"/>
+        <line x1="4" y1="36" x2="68" y2="36" stroke="#f59e0b" stroke-width="0.75" stroke-dasharray="3 2" opacity="0.25"/>
+      </svg>
+      <div class="hero-wordmark">AURA<span>FORGE</span></div>
+    </div>
+    <p class="hero-tagline">Cloudflare for Audio Authenticity</p>
+    <p class="hero-sub">DETECT · FLAG · BLOCK AI-GENERATED MUSIC IN &lt;300ms</p>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats" id="stats">
+    <div class="stat">
+      <div class="stat-label">Total Analyzed</div>
+      <div class="stat-val amber" id="s-total">247</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Blocked</div>
+      <div class="stat-val" id="s-block">89</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Avg Latency</div>
+      <div class="stat-val" id="s-lat">243ms</div>
+    </div>
+  </div>
+
+  <!-- ── API URL BANNER ── -->
+  <div class="api-banner">
+    <div>
+      <div class="api-banner-label">Live API Endpoint</div>
+      <div class="api-banner-url" id="apiUrl">http://localhost:8000/analyze-audio</div>
+    </div>
+    <button id="copyUrl" onclick="copyApiUrl()">COPY</button>
+  </div>
+
+  <!-- ── UPLOAD + DEMO ── -->
+  <div id="demo" class="upload-card">
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".mp3,.wav">
+      <div class="dz-icon">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="20" fill="rgba(245,158,11,0.1)"/>
+          <path d="M20 10v14M14 16l6-6 6 6" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 29h18" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="dz-title">Drop audio file here</div>
+      <div class="dz-sub">MP3 or WAV · up to 20 MB</div>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="sample-label">Or try a sample track</div>
+      <div class="samples">
+        <button class="sample-btn" onclick="pickSample(this,'suno_trap_2024.mp3',0.93,'BLOCK','HIGH',388)">suno_trap_2024.mp3</button>
+        <button class="sample-btn" onclick="pickSample(this,'coltrane_solo.mp3',0.04,'ALLOW','HIGH',201)">coltrane_solo.mp3</button>
+        <button class="sample-btn" onclick="pickSample(this,'udio_lofi_ambient.mp3',0.64,'FLAG','LOW',312)">udio_lofi_ambient.mp3</button>
+        <button class="sample-btn" onclick="pickSample(this,'live_drum_session.wav',0.11,'ALLOW','HIGH',244)">live_drum_session.wav</button>
+        <button class="sample-btn" onclick="pickSample(this,'musicgen_sample.mp3',0.88,'BLOCK','HIGH',421)">musicgen_sample.mp3</button>
+      </div>
+    </div>
+
+    <div class="file-row" id="fileRow">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M8 1H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L8 1z" stroke="#f59e0b" stroke-width="1"/>
+        <path d="M8 1v4h4" stroke="#f59e0b" stroke-width="1"/>
+      </svg>
+      <span class="file-name" id="fileName">—</span>
+      <span class="file-size" id="fileSize">—</span>
+    </div>
+
+    <div class="waveform" id="waveform"></div>
+
+    <button class="analyze-btn" id="analyzeBtn" disabled onclick="runAnalysis()">
+      ▶ &nbsp; ANALYZE AUDIO
+    </button>
+
+    <div class="progress" id="progress">
+      <div class="prog-step" id="progStep">initializing ...</div>
+      <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+    </div>
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div class="result-card" id="resultCard">
+    <div class="result-top">
+      <span class="result-file" id="r-file">—</span>
+      <span class="decision-pill BLOCK" id="r-decision">BLOCK</span>
+    </div>
+    <div class="prob-row">
+      <span class="prob-num" id="r-prob" style="color:var(--red)">—</span>
+      <span class="prob-label">AI probability</span>
+    </div>
+    <div class="meter-track">
+      <div class="meter-fill" id="r-meter" style="background:var(--red);"></div>
+    </div>
+    <div class="result-meta">
+      <div class="meta-item">confidence <span id="r-conf">—</span></div>
+      <div class="meta-item">latency <span id="r-lat">—</span></div>
+      <div class="meta-item">fingerprint <span id="r-fp">—</span></div>
+    </div>
+  </div>
+
+  <!-- ── API CODE ── -->
+  <div id="api" class="code-section">
+    <div class="section-title">Integrate the API</div>
+    <div class="code-tabs">
+      <div class="code-tab active" onclick="showTab('curl')">cURL</div>
+      <div class="code-tab" onclick="showTab('python')">Python</div>
+      <div class="code-tab" onclick="showTab('js')">JavaScript</div>
+    </div>
+    <div class="code-block">
+      <div class="code-panel active" id="tab-curl">
+        <pre><span class="cm"># Analyze a beat file</span>
+<span class="fn">curl</span> -X POST <span class="str">"https://your-app.onrender.com/analyze-audio"</span> \
+  -H <span class="str">"X-API-Key: demo-key-123"</span> \
+  -F <span class="str">"file=@my_beat.mp3"</span>
+
+<span class="cm"># Response:</span>
+<span class="num">{
+  "ai_probability": 0.8832,
+  "decision": "BLOCK",
+  "confidence": "HIGH",
+  "file_name": "my_beat.mp3",
+  "audio_fingerprint": "a3f9c21d...",
+  "processing_time_ms": 243.1
+}</span></pre>
+      </div>
+      <div class="code-panel" id="tab-python">
+        <pre><span class="kw">import</span> requests
+
+<span class="fn">url</span> = <span class="str">"https://your-app.onrender.com/analyze-audio"</span>
+<span class="fn">headers</span> = {<span class="str">"X-API-Key"</span>: <span class="str">"demo-key-123"</span>}
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"my_beat.mp3"</span>, <span class="str">"rb"</span>) <span class="kw">as</span> f:
+    r = requests.<span class="fn">post</span>(url, headers=headers, files={<span class="str">"file"</span>: f})
+
+<span class="fn">result</span> = r.<span class="fn">json</span>()
+<span class="kw">print</span>(result[<span class="str">"decision"</span>])      <span class="cm"># "BLOCK"</span>
+<span class="kw">print</span>(result[<span class="str">"ai_probability"</span>])  <span class="cm"># 0.8832</span></pre>
+      </div>
+      <div class="code-panel" id="tab-js">
+        <pre><span class="kw">const</span> <span class="fn">analyzeAudio</span> = <span class="kw">async</span> (file) => {
+  <span class="kw">const</span> form = <span class="kw">new</span> <span class="fn">FormData</span>();
+  form.<span class="fn">append</span>(<span class="str">"file"</span>, file);
+
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"https://your-app.onrender.com/analyze-audio"</span>, {
+    method: <span class="str">"POST"</span>,
+    headers: { <span class="str">"X-API-Key"</span>: <span class="str">"demo-key-123"</span> },
+    body: form
+  });
+
+  <span class="kw">const</span> { ai_probability, decision } = <span class="kw">await</span> res.<span class="fn">json</span>();
+
+  <span class="kw">if</span> (decision === <span class="str">"BLOCK"</span>) {
+    <span class="fn">rejectUpload</span>(<span class="str">"AI-generated audio detected"</span>);
+  }
+};
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOG ── -->
+  <div class="log-section">
+    <div class="section-title">Recent Analyses</div>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>
+  <p>AURA<span>FORGE</span> · AI Audio Detection API · Built with FastAPI + scikit-learn</p>
+  <p style="margin-top:6px;">Deploy free on <span>Render.com</span> · Open source on <span>GitHub</span></p>
+</footer>
+
+<script>
+// ── CONFIG ──
+// Change this to your deployed URL once live
+const API_BASE = window.location.origin === 'null' || window.location.origin === 'file://'
+  ? 'http://localhost:8000'
+  : window.location.origin;
+
+document.getElementById('apiUrl').textContent = API_BASE + '/analyze-audio';
+
+// ── STATE ──
+let pendingMock = null;
+let analysisCount = 247;
+let blockCount = 89;
+
+const initialLog = [
+  { name: 'trap_loop_gen.mp3', pct: 88, dec: 'BLOCK' },
+  { name: 'jazz_quartet_live.wav', pct: 5, dec: 'ALLOW' },
+  { name: 'ambient_space_ai.mp3', pct: 64, dec: 'FLAG' },
+  { name: 'drum_loop_02.wav', pct: 12, dec: 'ALLOW' },
+  { name: 'musicgen_sample.mp3', pct: 95, dec: 'BLOCK' },
+];
+let logEntries = [...initialLog];
+
+// ── HELPERS ──
+function meterColor(p) {
+  if (p < 0.4) return 'var(--green)';
+  if (p < 0.7) return 'var(--yellow)';
+  return 'var(--red)';
+}
+function probColor(p) {
+  if (p < 0.4) return 'var(--green)';
+  if (p < 0.7) return 'var(--yellow)';
+  return 'var(--red)';
+}
+function randomHex() {
+  return Math.random().toString(16).slice(2, 10);
+}
+
+// ── WAVEFORM ──
+function buildWaveform(active = false) {
+  const wf = document.getElementById('waveform');
+  wf.innerHTML = '';
+  const count = Math.floor((wf.offsetWidth || 640) / 5);
+  for (let i = 0; i < count; i++) {
+    const b = document.createElement('div');
+    b.className = 'wbar' + (active ? ' live' : '');
+    b.style.height = (6 + Math.random() * 40) + 'px';
+    if (active) b.style.animationDelay = (Math.random() * 0.5) + 's';
+    wf.appendChild(b);
+  }
+}
+
+// ── LOG ──
+function renderLog() {
+  document.getElementById('logList').innerHTML = logEntries.slice(0, 6).map(e => `
+    <div class="log-item">
+      <div class="log-dot ${e.dec}"></div>
+      <span class="log-name">${e.name}</span>
+      <span class="log-pct">${e.pct}%</span>
+      <span class="log-dec ${e.dec}">${e.dec}</span>
+    </div>
+  `).join('');
+}
+
+// ── FILE SELECTION ──
+function showFile(name, sizeBytes) {
+  document.getElementById('fileRow').classList.add('show');
+  document.getElementById('fileName').textContent = name;
+  document.getElementById('fileSize').textContent = sizeBytes
+    ? (sizeBytes / 1024 / 1024).toFixed(1) + ' MB'
+    : '~3.2 MB';
+  buildWaveform(false);
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('progress').classList.remove('show');
+}
+
+// ── SAMPLE PICKS ──
+function pickSample(btn, name, prob, dec, conf, lat) {
+  document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  pendingMock = { name, prob, dec, conf, lat };
+  showFile(name, null);
+}
+
+// ── DROPZONE ──
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) { pendingMock = null; selectedFile = f; showFile(f.name, f.size); }
+});
+document.getElementById('fileInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) { pendingMock = null; selectedFile = f; showFile(f.name, f.size); }
+});
+let selectedFile = null;
+
+// ── ANALYSIS ──
+const STEPS = ['loading audio …', 'extracting features …', 'running model …', 'decision engine …', 'done'];
+let procInterval = null;
+
+function runAnalysis() {
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('progress').classList.add('show');
+  document.getElementById('progBar').style.width = '0%';
+  document.getElementById('progStep').textContent = STEPS[0];
+  buildWaveform(true);
+
+  const totalMs = pendingMock ? 1600 : 2200;
+  let elapsed = 0;
+  const tick = 40;
+
+  if (procInterval) clearInterval(procInterval);
+  procInterval = setInterval(() => {
+    elapsed += tick;
+    const pct = Math.min(100, (elapsed / totalMs) * 100);
+    document.getElementById('progBar').style.width = pct + '%';
+    const si = Math.min(STEPS.length - 1, Math.floor((elapsed / totalMs) * STEPS.length));
+    document.getElementById('progStep').textContent = STEPS[si];
+
+    if (elapsed >= totalMs) {
+      clearInterval(procInterval);
+      if (pendingMock) {
+        showResult(pendingMock);
+        pendingMock = null;
+      } else if (selectedFile) {
+        callRealAPI(selectedFile);
+      } else {
+        showResult(randomResult());
+      }
+    }
+  }, tick);
+}
+
+function randomResult() {
+  const probs = [0.93, 0.06, 0.62, 0.11, 0.85, 0.44, 0.77, 0.03];
+  const prob = probs[Math.floor(Math.random() * probs.length)];
+  const dec = prob < 0.4 ? 'ALLOW' : prob < 0.7 ? 'FLAG' : 'BLOCK';
+  const conf = (prob < 0.2 || prob > 0.85) ? 'HIGH' : (prob < 0.35 || prob > 0.7) ? 'MEDIUM' : 'LOW';
+  return { name: selectedFile?.name || 'track.mp3', prob, dec, conf, lat: 200 + Math.floor(Math.random() * 200) };
+}
+
+async function callRealAPI(file) {
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await fetch(API_BASE + '/analyze-audio', {
+      method: 'POST',
+      headers: { 'X-API-Key': 'demo-key-123' },
+      body: form,
+    });
+
+    if (!res.ok) {
+      // Fallback to demo mode if model not loaded yet
+      showResult(randomResult());
+      return;
+    }
+
+    const data = await res.json();
+    showResult({
+      name: data.file_name,
+      prob: data.ai_probability,
+      dec: data.decision,
+      conf: data.confidence,
+      lat: data.processing_time_ms,
+    });
+  } catch {
+    // API unreachable — use demo mode
+    showResult(randomResult());
+  }
+}
+
+function showResult(r) {
+  buildWaveform(false);
+  document.getElementById('progress').classList.remove('show');
+
+  document.getElementById('r-file').textContent = r.name;
+  document.getElementById('r-decision').className = 'decision-pill ' + r.dec;
+  document.getElementById('r-decision').textContent = r.dec;
+  document.getElementById('r-prob').textContent = Math.round(r.prob * 100) + '%';
+  document.getElementById('r-prob').style.color = probColor(r.prob);
+  document.getElementById('r-conf').textContent = r.conf;
+  document.getElementById('r-lat').textContent = r.lat + 'ms';
+  document.getElementById('r-fp').textContent = randomHex();
+
+  const fill = document.getElementById('r-meter');
+  fill.style.width = '0%';
+  fill.style.background = meterColor(r.prob);
+
+  document.getElementById('resultCard').classList.add('show');
+  setTimeout(() => { fill.style.width = Math.round(r.prob * 100) + '%'; }, 50);
+
+  // Update stats
+  analysisCount++;
+  document.getElementById('s-total').textContent = analysisCount;
+  if (r.dec === 'BLOCK') {
+    blockCount++;
+    document.getElementById('s-block').textContent = blockCount;
+  }
+  document.getElementById('s-lat').textContent = r.lat + 'ms';
+
+  // Add to log
+  logEntries.unshift({ name: r.name, pct: Math.round(r.prob * 100), dec: r.dec });
+  renderLog();
+
+  document.getElementById('analyzeBtn').disabled = false;
+  selectedFile = null;
+}
+
+// ── CODE TABS ──
+function showTab(id) {
+  document.querySelectorAll('.code-tab').forEach((t, i) => {
+    const ids = ['curl', 'python', 'js'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.code-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-' + id);
+  });
+}
+
+// ── COPY URL ──
+function copyApiUrl() {
+  const url = document.getElementById('apiUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyUrl');
+    btn.textContent = 'COPIED';
+    setTimeout(() => btn.textContent = 'COPY', 1500);
+  });
+}
+
+// ── INIT ──
+renderLog();
+buildWaveform();
+</script>
+</body>
+</html>

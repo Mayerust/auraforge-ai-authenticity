@@ -1,3 +1,28 @@
-venv/
 __pycache__/
-*.png
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+
+# Model file (large — store separately)
+model.pkl
+
+# Training data
+data/
+
+# Logs
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Temp
+*.tmp
+*.wav.tmp
