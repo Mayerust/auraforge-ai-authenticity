@@ -1,9 +1,9 @@
-"""
-AURAFORGE: Analytics Logger
-Appends every analysis to a JSONL audit log.
-Used for dashboard analytics, abuse detection, and model retraining data.
 
-"""
+#AURAFORGE: Analytics Logger
+#Appends every analysis to a JSONL audit log.
+#Used for dashboard analytics, abuse detection, and model retraining data.
+
+
 
 import json
 import logging
@@ -17,11 +17,17 @@ _logger = logging.getLogger("auraforge.analytics")
 
 
 def log_analysis(result: dict):
+
+
+    
     """
+    
     Append one analysis result to logs/analyses.jsonl.
     Each line is a valid JSON object (JSONL format).
     
     """
+
+    
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         **result,

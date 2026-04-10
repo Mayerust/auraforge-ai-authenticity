@@ -1,8 +1,8 @@
-"""
-AURAFORGE: Decision Engine
-Maps AI probability score: business action (ALLOW / FLAG / BLOCK).
 
-"""
+#AURAFORGE: Decision Engine
+#Maps AI probability score: business action (ALLOW / FLAG / BLOCK).
+
+
 
 
 def decide(score: float) -> str:
@@ -16,10 +16,15 @@ def decide(score: float) -> str:
 
 
 def confidence_label(score: float) -> str:
+
+
     """
     Returns: "HIGH" | "MEDIUM" | "LOW"
     Confidence is highest at extremes, lowest near decision boundaries.
+    
     """
+
+    
     if score < 0.20 or score > 0.85:
         return "HIGH"
     elif score < 0.35 or score > 0.70:

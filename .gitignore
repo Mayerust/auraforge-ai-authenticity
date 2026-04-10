@@ -5,24 +5,25 @@ __pycache__/
 .venv/
 venv/
 env/
+BUILD_GUIDE.md
 
-# Model file (large — store separately)
+
 model.pkl
 
-# Training data
+
 data/
 
-# Logs
+
 logs/
 
-# OS
+
 .DS_Store
 Thumbs.db
 
-# IDEs
+
 .vscode/
 .idea/
 
-# Temp
+
 *.tmp
 *.wav.tmp

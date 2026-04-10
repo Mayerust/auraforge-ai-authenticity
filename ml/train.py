@@ -1,10 +1,8 @@
-"""
-AURAFORGE Training Pipeline
-Train and evaluate the audio AI detection model.
 
-Usage:
-    python ml/train.py --ai_dir data/ai --human_dir data/human --output model.pkl
-"""
+#AURAFORGE Training Pipeline
+#Train and evaluate the audio AI detection model.
+
+
 
 import os
 import argparse
@@ -21,7 +19,7 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 
-from features import extract_features
+from ml.features import extract_features
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("auraforge.train")
@@ -30,7 +28,11 @@ SUPPORTED_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg"}
 
 
 def load_dataset(ai_dir: str, human_dir: str):
+
+
     """
+
+
     Load audio files from AI and human directories.
     Labels: AI=1, Human=0
     
@@ -42,7 +44,10 @@ def load_dataset(ai_dir: str, human_dir: str):
         X: feature matrix (n_samples, 54)
         y: labels (n_samples,)
         file_names: list of file names
+
+
     """
+
     X, y, file_names = [], [], []
 
     for label, directory in [(1, ai_dir), (0, human_dir)]:
@@ -60,9 +65,9 @@ def load_dataset(ai_dir: str, human_dir: str):
                 X.append(features)
                 y.append(label)
                 file_names.append(f.name)
-                logger.debug(f"  ✓ {f.name}")
+                logger.debug(f"   {f.name}")
             except Exception as e:
-                logger.warning(f"  ✗ Skipping {f.name}: {e}")
+                logger.warning(f"   Skipping {f.name}: {e}")
 
     if not X:
         raise ValueError("No audio files could be loaded. Check your data directories.")
@@ -73,6 +78,8 @@ def load_dataset(ai_dir: str, human_dir: str):
 
 
 def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest"):
+
+
     """
     Train classification pipeline with scaler + model.
     
@@ -83,7 +90,10 @@ def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest")
     
     Returns:
         Trained sklearn Pipeline
+
     """
+
+
     if model_type == "gradient_boosting":
         classifier = GradientBoostingClassifier(
             n_estimators=200,
@@ -92,7 +102,7 @@ def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest")
             random_state=42,
         )
     else:
-        # Default: RandomForest (best for small datasets)
+        #Default: RandomForest (best)
         classifier = RandomForestClassifier(
             n_estimators=200,
             max_depth=10,
@@ -110,20 +120,24 @@ def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest")
 
 
 def evaluate_model(pipeline, X_test, y_test):
+
+
     """Print detailed evaluation metrics."""
+
+
     y_pred = pipeline.predict(X_test)
     y_prob = pipeline.predict_proba(X_test)[:, 1]
 
-    print("\n" + "="*50)
-    print("AURAFORGE MODEL EVALUATION")
-    print("="*50)
+   
+    print("AURAFORGE model evaluation script")
+    
     print(f"\nAccuracy:  {accuracy_score(y_test, y_pred):.4f}")
     print(f"ROC-AUC:   {roc_auc_score(y_test, y_prob):.4f}")
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred, target_names=["Human", "AI"]))
     print("Confusion Matrix:")
     print(confusion_matrix(y_test, y_pred))
-    print("="*50 + "\n")
+   
 
 
 def main():
@@ -136,29 +150,29 @@ def main():
     parser.add_argument("--test_size", type=float, default=0.2)
     args = parser.parse_args()
 
-    # Load data
+    #Load data
     X, y, _ = load_dataset(args.ai_dir, args.human_dir)
 
-    # Split
+    #Split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=args.test_size, random_state=42, stratify=y
     )
 
     logger.info(f"Train: {len(X_train)} | Test: {len(X_test)}")
 
-    # Train
-    logger.info(f"Training {args.model_type} model...")
+    #Train
+    logger.info(f"Training {args.model_type} model")
     pipeline = train_model(X_train, y_train, model_type=args.model_type)
     pipeline.fit(X_train, y_train)
 
-    # Cross-validation
+    #Cross-validation
     cv_scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring="roc_auc")
     logger.info(f"CV ROC-AUC: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
 
-    # Evaluate
+    #Evaluate
     evaluate_model(pipeline, X_test, y_test)
 
-    # Save
+    #Save
     joblib.dump(pipeline, args.output)
     logger.info(f"Model saved to {args.output}")
 

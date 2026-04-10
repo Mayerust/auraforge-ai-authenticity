@@ -1,8 +1,4 @@
-"""
-AURAFORGE Inference Engine
-Loads trained model and runs prediction.
-
-"""
+#loads trained model and runs prediction
 
 import os
 import numpy as np
@@ -16,10 +12,11 @@ MODEL_PATH = os.getenv("MODEL_PATH", "model.pkl")
 
 
 class AuraForgeModel:
-    """
-    Wrapper around trained sklearn pipeline.
-    Designed to be loaded once at startup and reused.
-    """
+    
+    #Wrapper around trained sklearn pipeline.
+    #Designed to be loaded once at startup and reused.
+
+    
 
     def __init__(self, model_path: str = MODEL_PATH):
         self.model_path = model_path
@@ -27,11 +24,13 @@ class AuraForgeModel:
         self.is_loaded = False
 
     def load(self):
+
         """Load model from disk. Call at API startup."""
+
         if not Path(self.model_path).exists():
             logger.warning(
                 f"Model not found at {self.model_path}. "
-                "Run ml/train.py first to generate model.pkl"
+                
             )
             self.is_loaded = False
             return
@@ -41,6 +40,8 @@ class AuraForgeModel:
         logger.info(f"Model loaded from {self.model_path}")
 
     def predict(self, features: np.ndarray) -> float:
+
+        
         """
         Run inference on a feature vector.
         
@@ -49,10 +50,13 @@ class AuraForgeModel:
         
         Returns:
             float: AI probability score (0.0 - 1.0)
+
         """
+
         if not self.is_loaded:
             raise RuntimeError(
-                "Model not loaded. Run ml/train.py to create model.pkl first."
+
+                "Model not loaded."
             )
 
         features_2d = features.reshape(1, -1)
@@ -60,7 +64,9 @@ class AuraForgeModel:
         return float(probability)
 
     def predict_batch(self, feature_matrix: np.ndarray) -> list[float]:
+
         """Batch prediction for multiple tracks."""
+        
         if not self.is_loaded:
             raise RuntimeError("Model not loaded.")
 

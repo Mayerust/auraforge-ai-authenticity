@@ -1,13 +1,4 @@
-"""
-AURAFORGE — Audio Authenticity Detection API
-"Cloudflare for Audio" — B2B SaaS ML pipeline
 
-Run locally:
-    uvicorn main:app --reload --port 8000
-
-API docs:
-    http://localhost:8000/docs
-"""
 
 import os
 import hashlib
@@ -41,7 +32,7 @@ app = FastAPI(
         "Built for B2B integration with music platforms."
     ),
     version="1.0.0",
-    contact={"name": "AURAFORGE", "email": "admin@auraforge.io"},
+    contact={"name": "AURAFORGE", "email": "iamironman029@gmail.com"},
 )
 
 app.add_middleware(
@@ -51,12 +42,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static demo page
+#Serve static demo page
 static_dir = Path("static")
 static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Pre-load model once at startup
+#Pre-load model once at startup
 model = AuraForgeModel()
 
 REQUIRE_API_KEY = os.getenv("REQUIRE_API_KEY", "false").lower() == "true"
@@ -64,15 +55,16 @@ REQUIRE_API_KEY = os.getenv("REQUIRE_API_KEY", "false").lower() == "true"
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("AURAFORGE API starting up ...")
+    logger.info("starting up")
     model.load()
     if model.is_loaded:
         logger.info("Model loaded and ready")
     else:
-        logger.warning("model.pkl not found — run: python ml/train.py first")
+        logger.warning("model.pkl not found")
 
 
 @app.get("/", tags=["info"])
+
 def root():
     return {
         "service": "AURAFORGE",
@@ -95,15 +87,17 @@ def health():
 
 @app.post("/analyze-audio", tags=["detection"])
 async def analyze_audio(
-    file: UploadFile = File(..., description="Audio file — MP3 or WAV, max 20 MB"),
-    x_api_key: str = Header(None, description="Your AURAFORGE API key"),
+    file: UploadFile = File(..., description="Audio file: MP3 or WAV, max 20 MB"),
+    x_api_key: str = Header(None, description="Your API key"),
 ):
     """
     Analyze an audio file for AI generation probability.
 
     Returns ai_probability (0-1), decision (ALLOW/FLAG/BLOCK),
     confidence (HIGH/MEDIUM/LOW), and processing latency.
+
     """
+
     if REQUIRE_API_KEY:
         validate_api_key(x_api_key)
 
@@ -113,7 +107,7 @@ async def analyze_audio(
         raise HTTPException(status_code=413, detail="File too large. Max 20 MB.")
 
     if len(content) < 1024:
-        raise HTTPException(status_code=400, detail="File too small — must be valid audio.")
+        raise HTTPException(status_code=400, detail="File too small: must be valid audio.")
 
     ext = Path(file.filename or "track.mp3").suffix.lower()
     if ext not in {".mp3", ".wav"}:
@@ -162,6 +156,7 @@ async def batch_analyze(
     x_api_key: str = Header(None),
 ):
     """Analyze up to 10 audio files in one request."""
+    
     if REQUIRE_API_KEY:
         validate_api_key(x_api_key)
 

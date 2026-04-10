@@ -5,7 +5,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install
 ```bash
@@ -53,7 +53,7 @@ curl -X POST http://localhost:8000/analyze-audio \
 
 ---
 
-## 🐳 Docker
+## Docker
 
 ```bash
 docker build -t auraforge .
@@ -62,7 +62,7 @@ docker run -p 8000:8000 -v $(pwd)/model.pkl:/app/model.pkl auraforge
 
 ---
 
-## 🧠 Architecture
+## Architecture
 
 ```
 Client (Beat22 / Spotify / etc.)
@@ -80,7 +80,7 @@ Client (Beat22 / Spotify / etc.)
 
 ---
 
-## 📊 Feature Engineering
+## Feature Engineering
 
 | Feature | Count | Why |
 |---------|-------|-----|
@@ -95,7 +95,7 @@ Client (Beat22 / Spotify / etc.)
 
 ---
 
-## 🗃️ Datasets
+## Datasets
 
 ### AI Audio
 - [Suno.com](https://suno.com) — download generated tracks
@@ -112,19 +112,19 @@ Client (Beat22 / Spotify / etc.)
 
 ---
 
-## ⚙️ Decision Thresholds
+## Decision Thresholds
 
 | Score | Decision | Meaning |
 |-------|----------|---------|
-| < 0.40 | ✅ ALLOW | Likely human, pass through |
-| 0.40 – 0.69 | ⚠️ FLAG | Ambiguous, queue for review |
-| ≥ 0.70 | 🚫 BLOCK | Likely AI-generated, reject |
+| < 0.40 | ALLOW | Likely human, pass through |
+| 0.40 – 0.69 | FLAG | Ambiguous, queue for review |
+| ≥ 0.70 | BLOCK | Likely AI-generated, reject |
 
 Thresholds are configurable per platform via environment variables.
 
 ---
 
-## 🔑 API Key Management
+## API Key Management
 
 Set valid keys via environment variable:
 ```bash
@@ -134,7 +134,7 @@ export REQUIRE_API_KEY=true
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] MVP: RandomForest + FastAPI
 - [ ] CNN model on mel-spectrograms (higher accuracy)
