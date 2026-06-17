@@ -20,12 +20,12 @@ def log_analysis(result: dict):
 
 
     
-    """
+
     
-    Append one analysis result to logs/analyses.jsonl.
-    Each line is a valid JSON object (JSONL format).
+    #Append one analysis result to logs/analyses.jsonl.
+    #Each line is a valid JSON object (JSONL format).
     
-    """
+
 
     
     entry = {
