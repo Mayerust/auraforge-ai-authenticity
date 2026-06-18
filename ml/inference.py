@@ -25,7 +25,7 @@ class AuraForgeModel:
 
     def load(self):
 
-        """Load model from disk. Call at API startup."""
+        #Load model from disk. Call at API startup."""
 
         if not Path(self.model_path).exists():
             logger.warning(
@@ -42,16 +42,16 @@ class AuraForgeModel:
     def predict(self, features: np.ndarray) -> float:
 
         
-        """
-        Run inference on a feature vector.
         
-        Args:
-            features: np.ndarray of shape (54,)
+        #Run inference on a feature vector.
         
-        Returns:
-            float: AI probability score (0.0 - 1.0)
+        #Args:
+        #features: np.ndarray of shape (54,)
+        
+        #Returns:
+        #float: AI probability score (0.0 - 1.0)
 
-        """
+        
 
         if not self.is_loaded:
             raise RuntimeError(
@@ -65,7 +65,7 @@ class AuraForgeModel:
 
     def predict_batch(self, feature_matrix: np.ndarray) -> list[float]:
 
-        """Batch prediction for multiple tracks."""
+        #Batch prediction for multiple tracks.
         
         if not self.is_loaded:
             raise RuntimeError("Model not loaded.")

@@ -90,13 +90,13 @@ async def analyze_audio(
     file: UploadFile = File(..., description="Audio file: MP3 or WAV, max 20 MB"),
     x_api_key: str = Header(None, description="Your API key"),
 ):
-    """
-    Analyze an audio file for AI generation probability.
+    
+    #Analyze an audio file for AI generation probability.
 
-    Returns ai_probability (0-1), decision (ALLOW/FLAG/BLOCK),
-    confidence (HIGH/MEDIUM/LOW), and processing latency.
+    #Returns ai_probability (0-1), decision (ALLOW/FLAG/BLOCK),
+    #confidence (HIGH/MEDIUM/LOW), and processing latency.
 
-    """
+   
 
     if REQUIRE_API_KEY:
         validate_api_key(x_api_key)
@@ -155,7 +155,7 @@ async def batch_analyze(
     files: list[UploadFile] = File(...),
     x_api_key: str = Header(None),
 ):
-    """Analyze up to 10 audio files in one request."""
+    #Analyze up to 10 audio files in one request.
     
     if REQUIRE_API_KEY:
         validate_api_key(x_api_key)

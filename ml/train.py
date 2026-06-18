@@ -30,23 +30,20 @@ SUPPORTED_EXTENSIONS = {".mp3", ".wav", ".flac", ".ogg"}
 def load_dataset(ai_dir: str, human_dir: str):
 
 
-    """
-
-
-    Load audio files from AI and human directories.
-    Labels: AI=1, Human=0
+    #Load audio files from AI and human directories.
+    #Labels: AI=1, Human=0
     
-    Args:
-        ai_dir: Directory containing AI-generated audio files
-        human_dir: Directory containing human-made audio files
+    #Args:
+        #ai_dir: Directory containing AI-generated audio files
+        #human_dir: Directory containing human-made audio files
     
-    Returns:
-        X: feature matrix (n_samples, 54)
-        y: labels (n_samples,)
-        file_names: list of file names
+    #Returns:
+        #X: feature matrix (n_samples, 54)
+        #y: labels (n_samples,)
+        #file_names: list of file names
 
 
-    """
+    
 
     X, y, file_names = [], [], []
 
@@ -80,18 +77,18 @@ def load_dataset(ai_dir: str, human_dir: str):
 def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest"):
 
 
-    """
-    Train classification pipeline with scaler + model.
     
-    Args:
-        X: feature matrix
-        y: labels
-        model_type: 'random_forest' or 'gradient_boosting'
+    #Train classification pipeline with scaler + model.
     
-    Returns:
-        Trained sklearn Pipeline
+    #Args:
+        #X: feature matrix
+        #y: labels
+        #model_type: 'random_forest' or 'gradient_boosting'
+    
+    #Returns:
+        #Trained sklearn Pipeline
 
-    """
+    
 
 
     if model_type == "gradient_boosting":
@@ -122,7 +119,7 @@ def train_model(X: np.ndarray, y: np.ndarray, model_type: str = "random_forest")
 def evaluate_model(pipeline, X_test, y_test):
 
 
-    """Print detailed evaluation metrics."""
+    #Print detailed evaluation metrics.
 
 
     y_pred = pipeline.predict(X_test)
